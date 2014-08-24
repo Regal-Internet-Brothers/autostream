@@ -5,14 +5,15 @@ Public
 ' Preprocessor related:
 #AUTOSTREAM_USE_BUFFERS_DIRECTLY = True
 
-' Imports:
+' Imports (Public):
 Import brl.stream
 
+' Imports (Private):
 Private
 
 Import brl
 
-#If TARGET = "glfw" Or TARGET = "stdcpp" Or TARGET = "sexy"
+#If BRL_OS_IMPLEMENTED ' TARGET = "glfw" Or TARGET = "stdcpp" Or TARGET = "sexy"
 	Import os
 #End
 
