@@ -3,7 +3,11 @@ Strict
 Public
 
 ' Preprocessor related:
+#AUTOSTREAM_IMPLEMENTED = True
+
+' This may be used to toggle calls to ''
 #AUTOSTREAM_USE_BUFFERS_DIRECTLY = True
+'#AUTOSTREAM_IMPORT_OS = True
 
 ' Imports (Public):
 Import brl.stream
@@ -11,32 +15,20 @@ Import brl.stream
 ' Imports (Private):
 Private
 
-Import brl
+Import brl.databuffer
+Import brl.filestream
+Import brl.datastream
 
-#If BRL_OS_IMPLEMENTED ' TARGET = "glfw" Or TARGET = "stdcpp" Or TARGET = "sexy"
+#If AUTOSTREAM_IMPORT_OS
 	Import os
-#End
-
-#If (BRL_OS_IMPLEMENTED Or BRL_GAMETARGET_IMPLEMENTED)
-	Import publicdatastream
-#End
-
-#If Not BRL_OS_IMPLEMENTED And BRL_GAMETARGET_IMPLEMENTED
+#Elseif BRL_GAMETARGET_IMPLEMENTED
 	Import mojo.app
 #End
 
 Public
 
-#Rem
-Import brl.databuffer
-Import brl.stream
-
-Import brl.filestream
-Import brl.datastream
-#End
-
 ' Aliases:
-#If BRL_OS_IMPLEMENTED
+#If AUTOSTREAM_IMPORT_OS ' BRL_OS_IMPLEMENTED
 	Alias LoadString = os.LoadString
 #Elseif BRL_GAMETARGET_IMPLEMENTED
 	Alias LoadString = app.LoadString
@@ -44,10 +36,9 @@ Import brl.datastream
 
 ' Functions:
 Function OpenAutoStream:Stream(Path:String, Mode:String="r")
-	' Local variable(s):
-	Local S:Stream = Null
-	
-	If (Path.Length() = 0) Then Return Null
+	If (Path.Length() = 0) Then
+		Return Null
+	Endif
 	
 	#If TARGET = "html5"
 		If (Path.ToLower().Find("monkey://internal") <> -1) Then
@@ -56,7 +47,7 @@ Function OpenAutoStream:Stream(Path:String, Mode:String="r")
 	#End
 	
 	#If BRL_FILESTREAM_IMPLEMENTED
-		S = FileStream.Open(Path, Mode)
+		Return FileStream.Open(Path, Mode)
 	#Elseif BRL_GAMETARGET_IMPLEMENTED Or BRL_OS_IMPLEMENTED
 		Select Mode
 			Case "r"
@@ -67,9 +58,11 @@ Function OpenAutoStream:Stream(Path:String, Mode:String="r")
 					InputBuffer = DataBuffer.Load(Path)
 				#Else
 					' Local variable(s):
-					Local InputStr:String = LoadString(Path)
+					Local InputStr:= LoadString(Path)
 					
-					If (InputStr.Length() = 0) Then Return Null
+					If (InputStr.Length() = 0) Then
+						Return Null
+					Endif
 					
 					InputBuffer = New DataBuffer(InputStr.Length())
 					InputBuffer.PokeString(InputStr)
@@ -79,53 +72,27 @@ Function OpenAutoStream:Stream(Path:String, Mode:String="r")
 					Return Null
 				Endif
 				
-				S = New DataStream(InputBuffer)
-			Default
-				#If BRL_OS_IMPLEMENTED
-					If (Path.Length()) Then
-						S = New PublicDataStream(True, Path)
-					Endif
-				#Else
-					#If CONFIG = "debug"
-						Error("Writing files is disabled on this target.")
-					#End
-				#End
+				Return New DataStream(InputBuffer)
 		End Select
 	#Else
-		#AUTOSTREAM_IMPLEMENTED = False
-		
-		'#Error("Unable to find a suitable stream-type.")
+		#Error("Unable to find a suitable stream-type.")
 	#End
 	
-	Return S
+	' Return the default response.
+	Return Null
 End
 
 Function CloseAutoStream:Bool(S:Stream, StreamIsCustom:Bool=False)
-	If (S = Null) Then Return False
+	' Check for errors:
+	If (S = Null) Then
+		Return False
+	Endif
 	
-	#If Not BRL_FILESTREAM_IMPLEMENTED And (BRL_OS_IMPLEMENTED Or BRL_GAMETARGET_IMPLEMENTED)
-		' Local variable(s):
-		Local DS:= PublicDataStream(S)
-		
-		If (DS <> Null) Then
-			If (DS.ShouldResize) Then
-				#If BRL_OS_IMPLEMENTED
-					If (DS.Path.Length()) Then
-						SaveString(DS.Buffer.PeekString(0), DS.Path)
-					Endif
-				#End
-			Endif
-		Endif
-	#End
-	
-	' Close the stream specified.
-	If (Not StreamIsCustom) Then S.Close()
+	' Close the stream specified:
+	If (Not StreamIsCustom) Then
+		S.Close()
+	Endif
 	
 	' Return the default response.
 	Return True
 End
-
-' Preprocessor related:
-
-' Set the implementation flag to true.
-#AUTOSTREAM_IMPLEMENTED = True
