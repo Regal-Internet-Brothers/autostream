@@ -16,8 +16,12 @@ Import brl.stream
 Private
 
 Import brl.databuffer
-Import brl.filestream
 Import brl.datastream
+
+' Not the best method, but it works.
+#If LANG = "cpp" Or LANG = "java" Or LANG = "cs"
+	Import brl.filestream
+#End
 
 #If AUTOSTREAM_IMPORT_OS
 	Import os
