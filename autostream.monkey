@@ -52,7 +52,7 @@ Function OpenAutoStream:Stream(Path:String, Mode:String="r")
 	
 	#If BRL_FILESTREAM_IMPLEMENTED
 		Return FileStream.Open(Path, Mode)
-	#Elseif BRL_GAMETARGET_IMPLEMENTED Or BRL_OS_IMPLEMENTED
+	#Elseif BRL_DATABUFFER_IMPLEMENTED And (AUTOSTREAM_USE_BUFFERS_DIRECTLY Or BRL_GAMETARGET_IMPLEMENTED Or BRL_OS_IMPLEMENTED)
 		Select Mode
 			Case "r"
 				' Local variable(s):
@@ -79,7 +79,7 @@ Function OpenAutoStream:Stream(Path:String, Mode:String="r")
 				Return New DataStream(InputBuffer)
 		End Select
 	#Else
-		#Error("Unable to find a suitable stream-type.")
+		'#Error("Unable to find a suitable stream-type.")
 	#End
 	
 	' Return the default response.
